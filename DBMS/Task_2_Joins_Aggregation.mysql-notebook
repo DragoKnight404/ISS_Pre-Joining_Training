@@ -1,0 +1,1163 @@
+{
+    "type": "MySQLNotebook",
+    "version": "1.0",
+    "caption": "Script",
+    "content": "/*\n * DBMS Assignment Part 2: Joins, Unions, Aggregation, Views\n * Concepts Covered:\n * 1. Joins: Inner, Left, Right, Full (Emulated via Union)\n * 2. Advanced Select: Insert Into Select, Create Table As\n * 3. Aggregation: Group By, Having, Sum, Count\n * 4. Objects: Views, Null Functions\n */\n\nUSE ecommerce_db;\n\n-- ==========================================\n-- 1. PREPARATION: Add Nullable Data\n-- ==========================================\n-- We need a customer with NO orders to demonstrate Left Join.\nINSERT INTO Customers (first_name, last_name, email, age) \nVALUES ('Eve', 'NoOrder', 'eve@test.com', 28);\n\n-- We need an order with NO valid customer to demonstrate Right Join.\n-- (Note: Usually FK prevents this. We temporarily disable FK checks for this demo).\nSET FOREIGN_KEY_CHECKS=0;\nINSERT INTO Orders (customer_id, product_name, amount, order_date) \nVALUES (999, 'Ghost Order', 500.00, '2023-03-01');\nSET FOREIGN_KEY_CHECKS=1;\n\n\n-- ==========================================\n-- 2. JOINS (Connecting Tables)\n-- ==========================================\n\n-- A. INNER JOIN (Matches Only)\n-- \"Show me customers who actually bought something\"\nSELECT \n    c.first_name, \n    c.email, \n    o.product_name, \n    o.amount\nFROM Customers c\nINNER JOIN Orders o ON c.customer_id = o.customer_id;\n\n-- B. LEFT JOIN (All Left, Matched Right)\n-- \"Show me ALL customers, and their orders if they have any (Eve will show NULL)\"\nSELECT \n    c.first_name, \n    o.product_name \nFROM Customers c\nLEFT JOIN Orders o ON c.customer_id = o.customer_id;\n\n-- C. RIGHT JOIN (All Right, Matched Left)\n-- \"Show me ALL orders, even if the customer is missing (Ghost Order will show NULL)\"\nSELECT \n    c.first_name, \n    o.product_name \nFROM Customers c\nRIGHT JOIN Orders o ON c.customer_id = o.customer_id;\n\n-- D. FULL JOIN (MySQL Workaround)\n-- Combines LEFT and RIGHT join results.\nSELECT c.first_name, o.product_name FROM Customers c LEFT JOIN Orders o ON c.customer_id = o.customer_id\nUNION\nSELECT c.first_name, o.product_name FROM Customers c RIGHT JOIN Orders o ON c.customer_id = o.customer_id;\n\n\n-- ==========================================\n-- 3. UNIONS\n-- ==========================================\n-- Combines two result sets into one list. \n-- Example: Create a single mailing list of Employees and Customers.\n-- (Assuming we had an Employees table, here we simulate it with raw strings)\nSELECT first_name, email FROM Customers\nUNION\nSELECT 'Admin_User' AS first_name, 'admin@ecommerce.com' AS email;\n\n\n-- ==========================================\n-- 4. COPYING DATA (Select Into / Insert Into Select)\n-- ==========================================\n\n-- A. CREATE TABLE AS SELECT (The MySQL version of \"SELECT INTO\")\n-- Creates a backup table of high-value orders instantly.\nCREATE TABLE High_Value_Backup AS\nSELECT * FROM Orders WHERE amount > 100;\n\n-- B. INSERT INTO ... SELECT\n-- Copies data from one existing table to another.\n-- Let's archive old orders into a new table.\nCREATE TABLE Order_Archive LIKE Orders; -- Creates empty table with same structure\nINSERT INTO Order_Archive\nSELECT * FROM Orders WHERE order_date < '2023-02-01';\n\n-- ==========================================\n-- 5. AGGREGATION (Group By & Having)\n-- ==========================================\n\n-- \"How much has each customer spent in total?\"\nSELECT \n    c.first_name,\n    COUNT(o.order_id) AS total_orders,\n    SUM(o.amount) AS total_spent\nFROM Customers c\nLEFT JOIN Orders o ON c.customer_id = o.customer_id\nGROUP BY c.customer_id, c.first_name;\n\n-- HAVING Clause: Filter AFTER grouping\n-- \"Show me only VIP customers who spent more than $1000\"\nSELECT \n    c.first_name,\n    SUM(o.amount) AS total_spent\nFROM Customers c\nJOIN Orders o ON c.customer_id = o.customer_id\nGROUP BY c.customer_id\nHAVING total_spent > 1000;\n\n\n-- ==========================================\n-- 6. VIEWS & NULL FUNCTIONS\n-- ==========================================\n\n-- A. NULL FUNCTIONS (IFNULL / COALESCE)\n-- Replace NULL with \"No Orders\" for better readability.\nSELECT \n    c.first_name,\n    IFNULL(o.product_name, 'No Orders Yet') AS product_status\nFROM Customers c\nLEFT JOIN Orders o ON c.customer_id = o.customer_id;\n\n-- B. CREATE VIEW\n-- A \"Virtual Table\" that saves a complex query.\n-- Useful for reporting dashboards.\nCREATE OR REPLACE VIEW Customer_Spend_Report AS\nSELECT \n    c.first_name, \n    c.email, \n    SUM(o.amount) AS total_spent \nFROM Customers c \nJOIN Orders o ON c.customer_id = o.customer_id \nGROUP BY c.customer_id;\n\n-- Usage: Treat the view like a normal table\nSELECT * FROM Customer_Spend_Report;",
+    "options": {
+        "tabSize": 4,
+        "indentSize": 4,
+        "insertSpaces": true,
+        "defaultEOL": "LF",
+        "trimAutoWhitespace": true
+    },
+    "viewState": {
+        "cursorState": [
+            {
+                "inSelectionMode": false,
+                "selectionStart": {
+                    "lineNumber": 126,
+                    "column": 1
+                },
+                "position": {
+                    "lineNumber": 126,
+                    "column": 1
+                }
+            }
+        ],
+        "viewState": {
+            "scrollLeft": 0,
+            "firstPosition": {
+                "lineNumber": 119,
+                "column": 1
+            },
+            "firstPositionDeltaTop": -4
+        },
+        "contributionsState": {
+            "editor.contrib.folding": {},
+            "editor.contrib.wordHighlighter": false
+        }
+    },
+    "contexts": [
+        {
+            "state": {
+                "start": 1,
+                "end": 90,
+                "language": "mysql",
+                "result": {
+                    "type": "resultIds",
+                    "list": [
+                        "35d017d6-0e5d-413a-ac09-24a1d1cee974",
+                        "656e10bd-2649-4b84-ade9-b655275ba56d",
+                        "2242eacb-b7e9-4649-c47b-a5ef361918f3",
+                        "b0fe9f97-da87-46fb-8057-200538b174cc",
+                        "bce0d720-b1d0-43ae-85c4-c4731eb50e3e",
+                        "03a0032f-718f-4bf6-ddac-ee0748caea19",
+                        "3a356c7e-b82f-4562-cdd7-a102aaa45337",
+                        "c0c36ff4-9f41-44d2-84fe-188c93fe9877",
+                        "bc27aa49-67cb-4e83-e246-26b49bb89cf1",
+                        "272b1d96-0bd8-4054-c83e-88279acd7e85"
+                    ]
+                },
+                "currentHeight": 36,
+                "currentSet": 1,
+                "statements": [
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 0,
+                            "length": 310
+                        },
+                        "contentStart": 293,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 310,
+                            "length": 299
+                        },
+                        "contentStart": 504,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 609,
+                            "length": 182
+                        },
+                        "contentStart": 766,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 791,
+                            "length": 119
+                        },
+                        "contentStart": 792,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 910,
+                            "length": 26
+                        },
+                        "contentStart": 911,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 936,
+                            "length": 358
+                        },
+                        "contentStart": 1149,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1294,
+                            "length": 243
+                        },
+                        "contentStart": 1421,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1537,
+                            "length": 248
+                        },
+                        "contentStart": 1668,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1785,
+                            "length": 295
+                        },
+                        "contentStart": 1863,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 2080,
+                            "length": 411
+                        },
+                        "contentStart": 2379,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 2491,
+                            "length": 348
+                        },
+                        "contentStart": 2765,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 2839,
+                            "length": 167
+                        },
+                        "contentStart": 2967,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3006,
+                            "length": 123
+                        },
+                        "contentStart": 3050,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3129,
+                            "length": 1
+                        },
+                        "contentStart": 3128,
+                        "state": 3
+                    }
+                ]
+            },
+            "data": [
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "35d017d6-0e5d-413a-ac09-24a1d1cee974",
+                    "rows": [
+                        {
+                            "0": "Alice",
+                            "1": "alice@example.com",
+                            "2": "Laptop",
+                            "3": "1200.00"
+                        },
+                        {
+                            "0": "Alice",
+                            "1": "alice@example.com",
+                            "2": "Mouse",
+                            "3": "25.50"
+                        },
+                        {
+                            "0": "Bob",
+                            "1": "bob@example.com",
+                            "2": "Monitor",
+                            "3": "300.00"
+                        },
+                        {
+                            "0": "Charlie",
+                            "1": "charlie@example.com",
+                            "2": "Keyboard",
+                            "3": "50.00"
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "first_name",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "email",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "product_name",
+                            "field": "2",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "amount",
+                            "field": "3",
+                            "dataType": {
+                                "type": 10,
+                                "flags": [
+                                    "UNSIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 65,
+                                "numericScale": 30,
+                                "parameterFormatType": "TwoOrOneOrZero",
+                                "synonyms": [
+                                    "FIXED",
+                                    "NUMERIC",
+                                    "DEC"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 4 records retrieved in 1.759ms"
+                    },
+                    "totalRowCount": 4,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 5,
+                    "sql": "\n\n\n-- ==========================================\n-- 2. JOINS (Connecting Tables)\n-- ==========================================\n\n-- A. INNER JOIN (Matches Only)\n-- \"Show me customers who actually bought something\"\nSELECT \n    c.first_name, \n    c.email, \n    o.product_name, \n    o.amount\nFROM Customers c\nINNER JOIN Orders o ON c.customer_id = o.customer_id",
+                    "updatable": false,
+                    "fullTableName": ""
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "656e10bd-2649-4b84-ade9-b655275ba56d",
+                    "rows": [
+                        {
+                            "0": "Alice",
+                            "1": "Laptop"
+                        },
+                        {
+                            "0": "Alice",
+                            "1": "Mouse"
+                        },
+                        {
+                            "0": "Bob",
+                            "1": "Monitor"
+                        },
+                        {
+                            "0": "Charlie",
+                            "1": "Keyboard"
+                        },
+                        {
+                            "0": "Eve",
+                            "1": null
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "first_name",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "product_name",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 5 records retrieved in 1.368ms"
+                    },
+                    "totalRowCount": 5,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 6,
+                    "sql": "\n\n-- B. LEFT JOIN (All Left, Matched Right)\n-- \"Show me ALL customers, and their orders if they have any (Eve will show NULL)\"\nSELECT \n    c.first_name, \n    o.product_name \nFROM Customers c\nLEFT JOIN Orders o ON c.customer_id = o.customer_id",
+                    "updatable": false,
+                    "fullTableName": ""
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "2242eacb-b7e9-4649-c47b-a5ef361918f3",
+                    "rows": [
+                        {
+                            "0": "Alice",
+                            "1": "Laptop"
+                        },
+                        {
+                            "0": "Alice",
+                            "1": "Mouse"
+                        },
+                        {
+                            "0": "Bob",
+                            "1": "Monitor"
+                        },
+                        {
+                            "0": "Charlie",
+                            "1": "Keyboard"
+                        },
+                        {
+                            "0": null,
+                            "1": "Ghost Order"
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "first_name",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "product_name",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 5 records retrieved in 1.684ms"
+                    },
+                    "totalRowCount": 5,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 7,
+                    "sql": "\n\n-- C. RIGHT JOIN (All Right, Matched Left)\n-- \"Show me ALL orders, even if the customer is missing (Ghost Order will show NULL)\"\nSELECT \n    c.first_name, \n    o.product_name \nFROM Customers c\nRIGHT JOIN Orders o ON c.customer_id = o.customer_id",
+                    "updatable": false,
+                    "fullTableName": ""
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "b0fe9f97-da87-46fb-8057-200538b174cc",
+                    "rows": [
+                        {
+                            "0": "Alice",
+                            "1": "Mouse"
+                        },
+                        {
+                            "0": "Alice",
+                            "1": "Laptop"
+                        },
+                        {
+                            "0": "Bob",
+                            "1": "Monitor"
+                        },
+                        {
+                            "0": "Charlie",
+                            "1": "Keyboard"
+                        },
+                        {
+                            "0": "Eve",
+                            "1": null
+                        },
+                        {
+                            "0": null,
+                            "1": "Ghost Order"
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "first_name",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "product_name",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 6 records retrieved in 2.252ms"
+                    },
+                    "totalRowCount": 6,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 8,
+                    "sql": "\n\n-- D. FULL JOIN (MySQL Workaround)\n-- Combines LEFT and RIGHT join results.\nSELECT c.first_name, o.product_name FROM Customers c LEFT JOIN Orders o ON c.customer_id = o.customer_id\nUNION\nSELECT c.first_name, o.product_name FROM Customers c RIGHT JOIN Orders o ON c.customer_id = o.customer_id",
+                    "updatable": false,
+                    "fullTableName": ""
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "bce0d720-b1d0-43ae-85c4-c4731eb50e3e",
+                    "rows": [
+                        {
+                            "0": "Alice",
+                            "1": "alice@example.com"
+                        },
+                        {
+                            "0": "Bob",
+                            "1": "bob@example.com"
+                        },
+                        {
+                            "0": "Charlie",
+                            "1": "charlie@example.com"
+                        },
+                        {
+                            "0": "Eve",
+                            "1": "eve@test.com"
+                        },
+                        {
+                            "0": "Admin_User",
+                            "1": "admin@ecommerce.com"
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "first_name",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "email",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 5 records retrieved in 2.541ms"
+                    },
+                    "totalRowCount": 5,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 9,
+                    "sql": "\n\n\n-- ==========================================\n-- 3. UNIONS\n-- ==========================================\n-- Combines two result sets into one list. \n-- Example: Create a single mailing list of Employees and Customers.\n-- (Assuming we had an Employees table, here we simulate it with raw strings)\nSELECT first_name, email FROM Customers\nUNION\nSELECT 'Admin_User' AS first_name, 'admin@ecommerce.com' AS email",
+                    "updatable": false,
+                    "fullTableName": ""
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "03a0032f-718f-4bf6-ddac-ee0748caea19",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 0 records retrieved in 1.407ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 0,
+                    "sql": "/*\n * DBMS Assignment Part 2: Joins, Unions, Aggregation, Views\n * Concepts Covered:\n * 1. Joins: Inner, Left, Right, Full (Emulated via Union)\n * 2. Advanced Select: Insert Into Select, Create Table As\n * 3. Aggregation: Group By, Having, Sum, Count\n * 4. Objects: Views, Null Functions\n */\n\nUSE ecommerce_db",
+                    "updatable": false
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "3a356c7e-b82f-4562-cdd7-a102aaa45337",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 1 row affected in 15.332ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 1,
+                    "sql": "\n\n-- ==========================================\n-- 1. PREPARATION: Add Nullable Data\n-- ==========================================\n-- We need a customer with NO orders to demonstrate Left Join.\nINSERT INTO Customers (first_name, last_name, email, age) \nVALUES ('Eve', 'NoOrder', 'eve@test.com', 28)",
+                    "updatable": false
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "c0c36ff4-9f41-44d2-84fe-188c93fe9877",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 0 records retrieved in 1.198ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 2,
+                    "sql": "\n\n-- We need an order with NO valid customer to demonstrate Right Join.\n-- (Note: Usually FK prevents this. We temporarily disable FK checks for this demo).\nSET FOREIGN_KEY_CHECKS=0",
+                    "updatable": false
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "bc27aa49-67cb-4e83-e246-26b49bb89cf1",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 1 row affected in 17.678ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 3,
+                    "sql": "\nINSERT INTO Orders (customer_id, product_name, amount, order_date) \nVALUES (999, 'Ghost Order', 500.00, '2023-03-01')",
+                    "updatable": false
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "272b1d96-0bd8-4054-c83e-88279acd7e85",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 0 records retrieved in 1.261ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 4,
+                    "sql": "\nSET FOREIGN_KEY_CHECKS=1",
+                    "updatable": false
+                }
+            ]
+        },
+        {
+            "state": {
+                "start": 91,
+                "end": 140,
+                "language": "mysql",
+                "result": {
+                    "type": "resultIds",
+                    "list": [
+                        "5ab73be0-39c4-4538-b42f-5fa83600a05a",
+                        "ec5e5148-ff36-402d-dab5-9eda23fc973c",
+                        "92bd1ca4-dbb7-48c2-a573-6d91b0a1c00f",
+                        "ff79ec82-cbc9-420d-8ce2-426316cc7b3d",
+                        "34b38901-7b0b-4b09-cd0e-ea80f831aaa9"
+                    ]
+                },
+                "currentHeight": 190.1875,
+                "currentSet": 1,
+                "statements": [
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 0,
+                            "length": 383
+                        },
+                        "contentStart": 179,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 383,
+                            "length": 272
+                        },
+                        "contentStart": 483,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 655,
+                            "length": 380
+                        },
+                        "contentStart": 878,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1035,
+                            "length": 317
+                        },
+                        "contentStart": 1140,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1352,
+                            "length": 83
+                        },
+                        "contentStart": 1399,
+                        "state": 0
+                    }
+                ]
+            },
+            "data": [
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "5ab73be0-39c4-4538-b42f-5fa83600a05a",
+                    "rows": [
+                        {
+                            "0": "Alice",
+                            "1": 2,
+                            "2": "1225.50"
+                        },
+                        {
+                            "0": "Bob",
+                            "1": 1,
+                            "2": "300.00"
+                        },
+                        {
+                            "0": "Charlie",
+                            "1": 1,
+                            "2": "50.00"
+                        },
+                        {
+                            "0": "Eve",
+                            "1": 0,
+                            "2": null
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "first_name",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "total_orders",
+                            "field": "1",
+                            "dataType": {
+                                "type": 4,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "total_spent",
+                            "field": "2",
+                            "dataType": {
+                                "type": 10,
+                                "flags": [
+                                    "UNSIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 65,
+                                "numericScale": 30,
+                                "parameterFormatType": "TwoOrOneOrZero",
+                                "synonyms": [
+                                    "FIXED",
+                                    "NUMERIC",
+                                    "DEC"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 4 records retrieved in 1.67ms"
+                    },
+                    "totalRowCount": 4,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 0,
+                    "sql": "-- ==========================================\n-- 5. AGGREGATION (Group By & Having)\n-- ==========================================\n\n-- \"How much has each customer spent in total?\"\nSELECT \n    c.first_name,\n    COUNT(o.order_id) AS total_orders,\n    SUM(o.amount) AS total_spent\nFROM Customers c\nLEFT JOIN Orders o ON c.customer_id = o.customer_id\nGROUP BY c.customer_id, c.first_name",
+                    "updatable": false,
+                    "fullTableName": ""
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "ec5e5148-ff36-402d-dab5-9eda23fc973c",
+                    "rows": [
+                        {
+                            "0": "Alice",
+                            "1": "1225.50"
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "first_name",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "total_spent",
+                            "field": "1",
+                            "dataType": {
+                                "type": 10,
+                                "flags": [
+                                    "UNSIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 65,
+                                "numericScale": 30,
+                                "parameterFormatType": "TwoOrOneOrZero",
+                                "synonyms": [
+                                    "FIXED",
+                                    "NUMERIC",
+                                    "DEC"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 1 record retrieved in 2.078ms"
+                    },
+                    "totalRowCount": 1,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 1,
+                    "sql": "\n\n-- HAVING Clause: Filter AFTER grouping\n-- \"Show me only VIP customers who spent more than $1000\"\nSELECT \n    c.first_name,\n    SUM(o.amount) AS total_spent\nFROM Customers c\nJOIN Orders o ON c.customer_id = o.customer_id\nGROUP BY c.customer_id\nHAVING total_spent > 1000",
+                    "updatable": false,
+                    "fullTableName": ""
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "92bd1ca4-dbb7-48c2-a573-6d91b0a1c00f",
+                    "rows": [
+                        {
+                            "0": "Alice",
+                            "1": "Mouse"
+                        },
+                        {
+                            "0": "Alice",
+                            "1": "Laptop"
+                        },
+                        {
+                            "0": "Bob",
+                            "1": "Monitor"
+                        },
+                        {
+                            "0": "Charlie",
+                            "1": "Keyboard"
+                        },
+                        {
+                            "0": "Eve",
+                            "1": "No Orders Yet"
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "first_name",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "product_status",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 5 records retrieved in 1.388ms"
+                    },
+                    "totalRowCount": 5,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 2,
+                    "sql": "\n\n\n-- ==========================================\n-- 6. VIEWS & NULL FUNCTIONS\n-- ==========================================\n\n-- A. NULL FUNCTIONS (IFNULL / COALESCE)\n-- Replace NULL with \"No Orders\" for better readability.\nSELECT \n    c.first_name,\n    IFNULL(o.product_name, 'No Orders Yet') AS product_status\nFROM Customers c\nLEFT JOIN Orders o ON c.customer_id = o.customer_id",
+                    "updatable": false,
+                    "fullTableName": ""
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "ff79ec82-cbc9-420d-8ce2-426316cc7b3d",
+                    "rows": [
+                        {
+                            "0": "Alice",
+                            "1": "alice@example.com",
+                            "2": "1225.50"
+                        },
+                        {
+                            "0": "Bob",
+                            "1": "bob@example.com",
+                            "2": "300.00"
+                        },
+                        {
+                            "0": "Charlie",
+                            "1": "charlie@example.com",
+                            "2": "50.00"
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "first_name",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "email",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "total_spent",
+                            "field": "2",
+                            "dataType": {
+                                "type": 10,
+                                "flags": [
+                                    "UNSIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 65,
+                                "numericScale": 30,
+                                "parameterFormatType": "TwoOrOneOrZero",
+                                "synonyms": [
+                                    "FIXED",
+                                    "NUMERIC",
+                                    "DEC"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 3 records retrieved in 2.529ms"
+                    },
+                    "totalRowCount": 3,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 4,
+                    "sql": "\n\n-- Usage: Treat the view like a normal table\nSELECT * FROM Customer_Spend_Report",
+                    "updatable": false,
+                    "fullTableName": "Customer_Spend_Report"
+                },
+                {
+                    "tabId": "392bbbab-616d-4c5e-e1ae-91d4a624bf9e",
+                    "resultId": "34b38901-7b0b-4b09-cd0e-ea80f831aaa9",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 0 records retrieved in 21.268ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 3,
+                    "sql": "\n\n-- B. CREATE VIEW\n-- A \"Virtual Table\" that saves a complex query.\n-- Useful for reporting dashboards.\nCREATE OR REPLACE VIEW Customer_Spend_Report AS\nSELECT \n    c.first_name, \n    c.email, \n    SUM(o.amount) AS total_spent \nFROM Customers c \nJOIN Orders o ON c.customer_id = o.customer_id \nGROUP BY c.customer_id",
+                    "updatable": false
+                }
+            ]
+        }
+    ]
+}

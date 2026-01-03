@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<Company>
+   <Employee id="101">
+      <Name>Alice Green</Name>
+      <Role>Manager</Role>
+   </Employee>
+   <Employee id="102">
+      <Name>Bob Brown</Name>
+      <Role>Developer</Role>
+   </Employee>
+</Company>

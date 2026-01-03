@@ -1,0 +1,5 @@
+{
+  "appName": "PaymentService",
+  "port": 8080,
+  "isDebugMode": true
+}

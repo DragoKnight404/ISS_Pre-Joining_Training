@@ -1,0 +1,615 @@
+{
+    "type": "MySQLNotebook",
+    "version": "1.0",
+    "caption": "Script",
+    "content": "/*\n * DBMS Assignment Part 3: Procedures, Indexing, and Normalization\n * Concepts Covered:\n * 1. Normalization: Theory & Application (1NF, 2NF, 3NF).\n * 2. Indexing: Creating indexes for performance.\n * 3. Stored Procedures: Encapsulating logic on the database side.\n * 4. Callable Statements: (Concept explanation).\n */\n\nUSE ecommerce_db;\n\n-- ==========================================\n-- 1. NORMALIZATION (Theory in Practice)\n-- ==========================================\n\n/*\n * WHAT IS NORMALIZATION?\n * It is the process of organizing data to reduce redundancy (duplicates).\n *\n * DEMONSTRATION IN OUR SCHEMA:\n *\n * UN-NORMALIZED (Bad Design):\n * Imagine a single table \"Sales\" with columns: \n * [CustomerName, CustomerEmail, ProductName, OrderAmount]\n * -> If Alice buys 10 items, her Email is repeated 10 times. \n * -> If she changes her email, we must update 10 rows.\n *\n * NORMALIZED (Our Design):\n * We split data into \"Customers\" and \"Orders\".\n * -> 1NF (Atomic): Each cell has one value (No comma-separated products).\n * -> 2NF (No Partial Dependency): All order details depend on the full Primary Key (Order_ID).\n * -> 3NF (No Transitive Dependency): Customer Email depends ONLY on Customer_ID, not on Order_ID.\n */\n\n\n-- ==========================================\n-- 2. INDEXING (Performance Optimization)\n-- ==========================================\n\n-- Problem: Searching by 'email' is slow if the table has 1 million users \n-- because the DB has to scan every single row (Full Table Scan).\n\n-- Solution: Create an Index. Think of this like the \"Index\" at the back of a textbook.\n-- It lets the DB find 'alice@example.com' instantly.\n\nCREATE INDEX idx_customer_email ON Customers(email);\n\n-- Composite Index: Useful if we frequently search by First AND Last name together.\nCREATE INDEX idx_full_name ON Customers(first_name, last_name);\n\n/* * NOTE: \n * Indexes speed up READS (Select) but slow down WRITES (Insert/Update) \n * because the index must be updated every time data changes.\n */\n\n\n-- ==========================================\n-- 3. STORED PROCEDURES\n-- ==========================================\n-- A Procedure is a function stored inside the database.\n-- It can take parameters (IN), return values (OUT), and contain logic (IF/ELSE).\n\nDROP PROCEDURE IF EXISTS ApplyDiscount;\n\nDELIMITER //\n\nCREATE PROCEDURE ApplyDiscount(IN cust_id INT, IN discount_percent DECIMAL(5,2))\nBEGIN\n    -- Logic: Only apply discount if the order amount is > $100\n    DECLARE orderCount INT;\n\n    -- Check if customer exists and has orders\n    SELECT COUNT(*) INTO orderCount FROM Orders WHERE customer_id = cust_id;\n\n    IF orderCount > 0 THEN\n        -- Update the amount\n        UPDATE Orders \n        SET amount = amount - (amount * (discount_percent / 100))\n        WHERE customer_id = cust_id AND amount > 100;\n        \n        SELECT CONCAT('Success: Discount applied for Customer ID ', cust_id) AS Message;\n    ELSE\n        SELECT 'Error: Customer has no eligible orders.' AS Message;\n    END IF;\nEND //\n\nDELIMITER ;\n\n\n-- ==========================================\n-- 4. CALLING THE PROCEDURE\n-- ==========================================\n\n-- Check Price Before\nSELECT * FROM Orders WHERE customer_id = 1;\n\n-- Run the Procedure (Give Customer 1 a 10% discount)\nCALL ApplyDiscount(1, 10);\n\n-- Check Price After (Should be lower)\nSELECT * FROM Orders WHERE customer_id = 1;\n\n/*\n * NOTE ON CALLABLE STATEMENT (Java Connection):\n * In Java (JDBC), you don't use 'PreparedStatement' for this.\n * You use 'CallableStatement':\n * * CallableStatement cstmt = conn.prepareCall(\"{call ApplyDiscount(?, ?)}\");\n * cstmt.setInt(1, 1);\n * cstmt.setDouble(2, 10.0);\n * cstmt.execute();\n */",
+    "options": {
+        "tabSize": 4,
+        "indentSize": 4,
+        "insertSpaces": true,
+        "defaultEOL": "LF",
+        "trimAutoWhitespace": true
+    },
+    "viewState": null,
+    "contexts": [
+        {
+            "state": {
+                "start": 1,
+                "end": 111,
+                "language": "mysql",
+                "result": {
+                    "type": "resultIds",
+                    "list": [
+                        "eaabf3cb-64df-4427-c33e-e52d0cecd2aa",
+                        "9dc34dc2-2e54-42dc-ba29-b88d636bac6c",
+                        "34e15fe5-f0ce-4617-ccaf-71f29a1dde14",
+                        "43acdd50-b117-45a2-f2fd-3bf73b3a8003",
+                        "2d376495-c44e-4394-f63c-f3129c4c37dd",
+                        "026466c0-084f-4093-95b0-575f9cf825cb",
+                        "25de4a72-a73f-4c35-f706-88e57cbe3ae2",
+                        "9ad5f4ce-2e8e-44ab-c5d2-2fb0179f9bb3",
+                        "b7f25907-7132-4500-bb91-70d98cee1430",
+                        "f23b75f1-dac5-4039-9813-4cbf7b0cc47f"
+                    ]
+                },
+                "currentHeight": 300,
+                "currentSet": 1,
+                "statements": [
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 0,
+                            "length": 339
+                        },
+                        "contentStart": 322,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 339,
+                            "length": 1363
+                        },
+                        "contentStart": 1650,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1702,
+                            "length": 149
+                        },
+                        "contentStart": 1788,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1851,
+                            "length": 450
+                        },
+                        "contentStart": 2263,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": "//",
+                        "span": {
+                            "start": 2301,
+                            "length": 14
+                        },
+                        "contentStart": 2303,
+                        "state": 4
+                    },
+                    {
+                        "delimiter": "//",
+                        "span": {
+                            "start": 2315,
+                            "length": 700
+                        },
+                        "contentStart": 2317,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3015,
+                            "length": 13
+                        },
+                        "contentStart": 3017,
+                        "state": 4
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3028,
+                            "length": 189
+                        },
+                        "contentStart": 3174,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3217,
+                            "length": 82
+                        },
+                        "contentStart": 3273,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3299,
+                            "length": 84
+                        },
+                        "contentStart": 3340,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3383,
+                            "length": 303
+                        },
+                        "contentStart": 3382,
+                        "state": 3
+                    }
+                ]
+            },
+            "data": [
+                {
+                    "tabId": "685f7ba2-6e37-4040-eaaf-48270ede06c6",
+                    "resultId": "eaabf3cb-64df-4427-c33e-e52d0cecd2aa",
+                    "rows": [
+                        {
+                            "0": 1,
+                            "1": 1,
+                            "2": "Laptop",
+                            "3": "1200.00",
+                            "4": "2023-01-10"
+                        },
+                        {
+                            "0": 2,
+                            "1": 1,
+                            "2": "Mouse",
+                            "3": "25.50",
+                            "4": "2023-01-12"
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "order_id",
+                            "field": "0",
+                            "dataType": {
+                                "type": 4,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": true,
+                            "nullable": false,
+                            "autoIncrement": true
+                        },
+                        {
+                            "title": "customer_id",
+                            "field": "1",
+                            "dataType": {
+                                "type": 4,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        },
+                        {
+                            "title": "product_name",
+                            "field": "2",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "amount",
+                            "field": "3",
+                            "dataType": {
+                                "type": 10,
+                                "flags": [
+                                    "UNSIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 65,
+                                "numericScale": 30,
+                                "parameterFormatType": "TwoOrOneOrZero",
+                                "synonyms": [
+                                    "FIXED",
+                                    "NUMERIC",
+                                    "DEC"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "order_date",
+                            "field": "4",
+                            "dataType": {
+                                "type": 27,
+                                "needsQuotes": true
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 2 records retrieved in 3.94ms"
+                    },
+                    "totalRowCount": 2,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 7,
+                    "sql": "\n\n\n-- ==========================================\n-- 4. CALLING THE PROCEDURE\n-- ==========================================\n\n-- Check Price Before\nSELECT * FROM Orders WHERE customer_id = 1",
+                    "updatable": true,
+                    "fullTableName": "Orders"
+                },
+                {
+                    "tabId": "685f7ba2-6e37-4040-eaaf-48270ede06c6",
+                    "resultId": "9dc34dc2-2e54-42dc-ba29-b88d636bac6c",
+                    "rows": [
+                        {
+                            "0": "Success: Discount applied for Customer ID 1"
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "Message",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 1 record retrieved in 21.255ms"
+                    },
+                    "totalRowCount": 1,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 8,
+                    "subIndex": 0,
+                    "sql": "\n\n-- Run the Procedure (Give Customer 1 a 10% discount)\nCALL ApplyDiscount(1, 10)",
+                    "updatable": false
+                },
+                {
+                    "tabId": "685f7ba2-6e37-4040-eaaf-48270ede06c6",
+                    "resultId": "34e15fe5-f0ce-4617-ccaf-71f29a1dde14",
+                    "rows": [
+                        {
+                            "0": 1,
+                            "1": 1,
+                            "2": "Laptop",
+                            "3": "1080.00",
+                            "4": "2023-01-10"
+                        },
+                        {
+                            "0": 2,
+                            "1": 1,
+                            "2": "Mouse",
+                            "3": "25.50",
+                            "4": "2023-01-12"
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "order_id",
+                            "field": "0",
+                            "dataType": {
+                                "type": 4,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": true,
+                            "nullable": false,
+                            "autoIncrement": true
+                        },
+                        {
+                            "title": "customer_id",
+                            "field": "1",
+                            "dataType": {
+                                "type": 4,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        },
+                        {
+                            "title": "product_name",
+                            "field": "2",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "amount",
+                            "field": "3",
+                            "dataType": {
+                                "type": 10,
+                                "flags": [
+                                    "UNSIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 65,
+                                "numericScale": 30,
+                                "parameterFormatType": "TwoOrOneOrZero",
+                                "synonyms": [
+                                    "FIXED",
+                                    "NUMERIC",
+                                    "DEC"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "order_date",
+                            "field": "4",
+                            "dataType": {
+                                "type": 27,
+                                "needsQuotes": true
+                            },
+                            "inPK": false,
+                            "nullable": true,
+                            "autoIncrement": false,
+                            "default": null
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 2 records retrieved in 1.842ms"
+                    },
+                    "totalRowCount": 2,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 9,
+                    "sql": "\n\n-- Check Price After (Should be lower)\nSELECT * FROM Orders WHERE customer_id = 1",
+                    "updatable": true,
+                    "fullTableName": "Orders"
+                },
+                {
+                    "tabId": "685f7ba2-6e37-4040-eaaf-48270ede06c6",
+                    "resultId": "43acdd50-b117-45a2-f2fd-3bf73b3a8003",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 0 records retrieved in 2.907ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 0,
+                    "sql": "/*\n * DBMS Assignment Part 3: Procedures, Indexing, and Normalization\n * Concepts Covered:\n * 1. Normalization: Theory & Application (1NF, 2NF, 3NF).\n * 2. Indexing: Creating indexes for performance.\n * 3. Stored Procedures: Encapsulating logic on the database side.\n * 4. Callable Statements: (Concept explanation).\n */\n\nUSE ecommerce_db",
+                    "updatable": false
+                },
+                {
+                    "tabId": "685f7ba2-6e37-4040-eaaf-48270ede06c6",
+                    "resultId": "2d376495-c44e-4394-f63c-f3129c4c37dd",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 0 records retrieved in 110.817ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 1,
+                    "sql": "\n\n-- ==========================================\n-- 1. NORMALIZATION (Theory in Practice)\n-- ==========================================\n\n/*\n * WHAT IS NORMALIZATION?\n * It is the process of organizing data to reduce redundancy (duplicates).\n *\n * DEMONSTRATION IN OUR SCHEMA:\n *\n * UN-NORMALIZED (Bad Design):\n * Imagine a single table \"Sales\" with columns: \n * [CustomerName, CustomerEmail, ProductName, OrderAmount]\n * -> If Alice buys 10 items, her Email is repeated 10 times. \n * -> If she changes her email, we must update 10 rows.\n *\n * NORMALIZED (Our Design):\n * We split data into \"Customers\" and \"Orders\".\n * -> 1NF (Atomic): Each cell has one value (No comma-separated products).\n * -> 2NF (No Partial Dependency): All order details depend on the full Primary Key (Order_ID).\n * -> 3NF (No Transitive Dependency): Customer Email depends ONLY on Customer_ID, not on Order_ID.\n */\n\n\n-- ==========================================\n-- 2. INDEXING (Performance Optimization)\n-- ==========================================\n\n-- Problem: Searching by 'email' is slow if the table has 1 million users \n-- because the DB has to scan every single row (Full Table Scan).\n\n-- Solution: Create an Index. Think of this like the \"Index\" at the back of a textbook.\n-- It lets the DB find 'alice@example.com' instantly.\n\nCREATE INDEX idx_customer_email ON Customers(email)",
+                    "updatable": false
+                },
+                {
+                    "tabId": "685f7ba2-6e37-4040-eaaf-48270ede06c6",
+                    "resultId": "026466c0-084f-4093-95b0-575f9cf825cb",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 0 records retrieved in 79.154ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 2,
+                    "sql": "\n\n-- Composite Index: Useful if we frequently search by First AND Last name together.\nCREATE INDEX idx_full_name ON Customers(first_name, last_name)",
+                    "updatable": false
+                },
+                {
+                    "tabId": "685f7ba2-6e37-4040-eaaf-48270ede06c6",
+                    "resultId": "25de4a72-a73f-4c35-f706-88e57cbe3ae2",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 0 records retrieved in 15.907ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 3,
+                    "sql": "\n\n/* * NOTE: \n * Indexes speed up READS (Select) but slow down WRITES (Insert/Update) \n * because the index must be updated every time data changes.\n */\n\n\n-- ==========================================\n-- 3. STORED PROCEDURES\n-- ==========================================\n-- A Procedure is a function stored inside the database.\n-- It can take parameters (IN), return values (OUT), and contain logic (IF/ELSE).\n\nDROP PROCEDURE IF EXISTS ApplyDiscount",
+                    "updatable": false
+                },
+                {
+                    "tabId": "685f7ba2-6e37-4040-eaaf-48270ede06c6",
+                    "resultId": "9ad5f4ce-2e8e-44ab-c5d2-2fb0179f9bb3",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 0 records retrieved in 21.593ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 5,
+                    "sql": "\n\nCREATE PROCEDURE ApplyDiscount(IN cust_id INT, IN discount_percent DECIMAL(5,2))\nBEGIN\n    -- Logic: Only apply discount if the order amount is > $100\n    DECLARE orderCount INT;\n\n    -- Check if customer exists and has orders\n    SELECT COUNT(*) INTO orderCount FROM Orders WHERE customer_id = cust_id;\n\n    IF orderCount > 0 THEN\n        -- Update the amount\n        UPDATE Orders \n        SET amount = amount - (amount * (discount_percent / 100))\n        WHERE customer_id = cust_id AND amount > 100;\n        \n        SELECT CONCAT('Success: Discount applied for Customer ID ', cust_id) AS Message;\n    ELSE\n        SELECT 'Error: Customer has no eligible orders.' AS Message;\n    END IF;\nEND ",
+                    "updatable": false
+                },
+                {
+                    "tabId": "685f7ba2-6e37-4040-eaaf-48270ede06c6",
+                    "resultId": "b7f25907-7132-4500-bb91-70d98cee1430",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 0 records retrieved in 21.255ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 8,
+                    "subIndex": 1,
+                    "sql": "\n\n-- Run the Procedure (Give Customer 1 a 10% discount)\nCALL ApplyDiscount(1, 10)",
+                    "updatable": false
+                },
+                {
+                    "tabId": "685f7ba2-6e37-4040-eaaf-48270ede06c6",
+                    "resultId": "f23b75f1-dac5-4039-9813-4cbf7b0cc47f",
+                    "rows": [],
+                    "columns": [
+                        {
+                            "title": "*",
+                            "field": "0",
+                            "dataType": {
+                                "type": 0
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 0 records retrieved in 1.831ms"
+                    },
+                    "totalRowCount": 0,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 10,
+                    "sql": "\n\n/*\n * NOTE ON CALLABLE STATEMENT (Java Connection):\n * In Java (JDBC), you don't use 'PreparedStatement' for this.\n * You use 'CallableStatement':\n * * CallableStatement cstmt = conn.prepareCall(\"{call ApplyDiscount(?, ?)}\");\n * cstmt.setInt(1, 1);\n * cstmt.setDouble(2, 10.0);\n * cstmt.execute();\n */",
+                    "updatable": false
+                }
+            ]
+        }
+    ]
+}
